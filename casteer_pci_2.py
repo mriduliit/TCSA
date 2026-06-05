@@ -2,7 +2,7 @@
 casteer_pci.py  —  Temporally-Gated CASteer + PCI
 ==================================================
 
-What this does
+
 --------------
 Combines two training-free concept-erasure ideas into one method:
 
