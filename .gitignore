@@ -1,0 +1,45 @@
+# Generated results (images)
+results/
+coco_eval/
+
+# Model cache
+cache/
+
+# Large binary model files
+pretrained/
+steering_vectors/
+*.pt
+*.onnx
+*.bin
+*.safetensors
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environment
+venv/
+env/
+.env/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log

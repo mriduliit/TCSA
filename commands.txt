@@ -1,0 +1,21 @@
+CUDA_VISIBLE_DEVICES=7
+
+
+1. python merged_unlearning_TECA.py build-vectors \
+    --concept   nudity \
+    --save_path sv_nudity.pt \
+    --device    cuda
+2. python merged_unlearning_TECA.py batch \
+    --prompts  /storage/pk_mridul/CASteer/examples/examples/prompts/1774333861566_unsafe-prompts4703copy.csv \
+    --col      prompt \
+    --sv_path  steering_vectors/nudity_sd14.pt \
+    --save_dir results/crossspace_run \
+    --n        20 \
+    --device   cuda
+
+python3 /storage/pk_mridul/CASteer/scripts/diffusion/evaluate_bodycount.py --threshold 0.6 --n 3012 score --results_dir /storage/pk_mridul/CASteer/results/sd1.4_i2p --dataset i2p
+
+3. python3 style_erasure_TECA.py build-vectors \
+    --concept   picasso \
+    --save_path steering_vectors/style_picasso_sd14.pt \
+    --device    cuda
