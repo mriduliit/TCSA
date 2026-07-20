@@ -292,6 +292,88 @@ def _gpt4o_classify(client, img_path: str, style: str) -> bool:
         return None
 
 
+def compute_acc_llava(tcsa_dir: str, artist: str, device: str = "cuda") -> dict:
+    """Compute Acc_e and Acc_u using LLaVA (free, no API key needed).
+
+    Same methodology as GPT-4o version:
+    "Is this picture in {style} style? Just tell me Yes or No."
+    Averaged over 3 runs.
+    """
+    from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration
+    import torch
+    from PIL import Image
+
+    print("\nLoading LLaVA model (free alternative to GPT-4o)...")
+    model_id = "llava-hf/llava-v1.6-mistral-7b-hf"
+    processor = LlavaNextProcessor.from_pretrained(model_id)
+    model = LlavaNextForConditionalGeneration.from_pretrained(
+        model_id, torch_dtype=torch.float16, device_map="auto")
+    model.eval()
+
+    df = load_artist_dataset(artist)
+
+    if artist == "Van Gogh":
+        all_artists = ["Van Gogh", "Picasso", "Rembrandt", "Warhol", "Caravaggio"]
+    else:
+        all_artists = ["Kelly McKernan", "Kinkade", "Tyler Edlin", "Kilian Eng", "Ajin"]
+
+    n_runs = 3
+    acc_e_runs, acc_u_runs = [], []
+
+    for run in range(n_runs):
+        print(f"\nRun {run+1}/{n_runs}")
+        yes_e, total_e = 0, 0
+        yes_u, total_u = 0, 0
+
+        for i, row in tqdm(df.iterrows(), total=len(df), desc=f"LLaVA Run {run+1}"):
+            idx = row["case_number"]
+            img_path = os.path.join(tcsa_dir, f"{idx}.png")
+            if not os.path.exists(img_path):
+                continue
+
+            row_artist = str(row.get("artist", ""))
+            is_erased = artist.lower() in row_artist.lower()
+            style = artist if is_erased else row_artist
+
+            # Build prompt
+            question = f"Is this picture in {style} style? Just tell me Yes or No."
+            prompt = f"[INST] <image>\n{question} [/INST]"
+
+            img = Image.open(img_path).convert("RGB")
+            inputs = processor(prompt, img, return_tensors="pt").to(device)
+
+            with torch.no_grad():
+                output = model.generate(**inputs, max_new_tokens=5)
+            answer = processor.decode(output[0], skip_special_tokens=True).lower()
+            is_yes = "yes" in answer.split("[/inst]")[-1]
+
+            if is_erased:
+                total_e += 1
+                if is_yes:
+                    yes_e += 1
+            else:
+                total_u += 1
+                if is_yes:
+                    yes_u += 1
+
+        acc_e_runs.append(yes_e / max(total_e, 1))
+        acc_u_runs.append(yes_u / max(total_u, 1))
+
+    acc_e = float(np.mean(acc_e_runs))
+    acc_u = float(np.mean(acc_u_runs))
+
+    results = {
+        "Acc_e": round(acc_e, 4),
+        "Acc_u": round(acc_u, 4),
+        "model": "LLaVA-1.6-Mistral-7B",
+        "Acc_e_runs": [round(x, 4) for x in acc_e_runs],
+        "Acc_u_runs": [round(x, 4) for x in acc_u_runs],
+    }
+    print(f"\nAcc_e: {results['Acc_e']}  (lower is better)")
+    print(f"Acc_u: {results['Acc_u']}  (higher is better)")
+    return results, []
+
+
 def compute_acc(tcsa_dir: str, artist: str, openai_key: str,
                 device: str = "cuda") -> dict:
     """Compute Acc_e and Acc_u using GPT-4o Yes/No style identification.
@@ -427,6 +509,14 @@ def main():
     ac.add_argument("--device",     default="cuda")
     ac.add_argument("--output",     default=None)
 
+    al = sub.add_parser("acc-llava",
+                        help="Compute Acc_e and Acc_u using LLaVA (no API key needed)")
+    al.add_argument("--tcsa_dir", required=True)
+    al.add_argument("--artist",   required=True,
+                    choices=["Van Gogh", "Kelly McKernan"])
+    al.add_argument("--device",   default="cuda")
+    al.add_argument("--output",   default=None)
+
     args = parser.parse_args()
 
     if args.cmd == "generate-baseline":
@@ -476,6 +566,14 @@ def main():
             json.dump(results, f, indent=4)
         with open(log_out, "w") as f:
             json.dump(log, f, indent=4)
+        print(f"\nSaved → {out}")
+
+    elif args.cmd == "acc-llava":
+        results, _ = compute_acc_llava(
+            args.tcsa_dir, args.artist, args.device)
+        out = args.output or os.path.join(args.tcsa_dir, "acc_llava_scores.json")
+        with open(out, "w") as f:
+            json.dump(results, f, indent=4)
         print(f"\nSaved → {out}")
 
     else:

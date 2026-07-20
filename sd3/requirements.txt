@@ -1,0 +1,13 @@
+# SD3 image generation requirements
+# Install torch first (CUDA 12.4 wheels), then this file.
+# See setup_env.sh for full setup steps.
+
+diffusers>=0.27.0
+transformers>=4.40.0
+accelerate>=0.28.0
+sentencepiece
+protobuf
+Pillow>=9.0.0
+pandas
+tqdm
+safetensors

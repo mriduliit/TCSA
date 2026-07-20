@@ -1,0 +1,16 @@
+{
+    "artist": "Van Gogh",
+    "tcsa_dir": "/storage/pk_mridul/TCSA/results/artist_final_vangogh_beta1",
+    "Acc_e": 0.2167,
+    "Acc_u": 0.925,
+    "Acc_e_runs": [
+        0.25,
+        0.2,
+        0.2
+    ],
+    "Acc_u_runs": [
+        0.925,
+        0.925,
+        0.925
+    ]
+}

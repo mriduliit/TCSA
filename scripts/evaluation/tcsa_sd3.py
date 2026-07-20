@@ -643,8 +643,7 @@ class TCSA_SD3:
 
             # Classifier-free guidance step
             latent_input = torch.cat([latents] * 2)
-            # Scale model input
-            latent_input = self.pipe.scheduler.scale_model_input(latent_input, t)
+            # FlowMatchEulerDiscreteScheduler (SD3) does not use scale_model_input
 
             with torch.no_grad():
                 noise_pred = self.pipe.transformer(

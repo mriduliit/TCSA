@@ -1,6 +1,8 @@
 # Generated results (images)
 results/
 coco_eval/
+ablation/results/
+ablation/nlce_data
 
 # Model cache
 cache/
@@ -12,6 +14,17 @@ steering_vectors/
 *.onnx
 *.bin
 *.safetensors
+
+# Images
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.bmp
+*.gif
+*.tif
+*.tiff
+*.svg
 
 # Python
 __pycache__/
